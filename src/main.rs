@@ -8,17 +8,17 @@ struct Options {
 	#[structopt(short, long)]
 	count: u8,
 
-    /// Name of the programming language
-    #[structopt(short, long)]
-    language: String,
+	/// Name of the programming language
+	#[structopt(short, long)]
+	language: String,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let opt = Options::from_args();
+	let opt = Options::from_args();
 
 	let language_filter = format!("language:{}", opt.language);
-	
+
 	let search_result = octocrab::instance()
 		.search()
 		.repositories(&language_filter)
@@ -29,11 +29,17 @@ async fn main() -> Result<()> {
 		.await?;
 
 	println!("┌───────────┬───────────────┬────────────┐");
-	println!("│{0: <10} │ {1: <10}    │ {2: <10} │", "Project", "User", "Percentage");
+	println!(
+		"│{0: <10} │ {1: <10}    │ {2: <10} │",
+		"Project", "User", "Percentage"
+	);
 	println!("├───────────┼───────────────┼────────────┤");
 
 	search_result.items.iter().for_each(|repo| {
-		println!("│{0: <10} │ {1: <10}    │ {2: <10} │", repo.name, repo.owner.login, 0);
+		println!(
+			"│{0: <10} │ {1: <10}    │ {2: <10} │",
+			repo.name, repo.owner.login, 0
+		);
 	});
 
 	println!("└───────────┴───────────────┴────────────┘");
