@@ -6,7 +6,7 @@ use reqwest::Client;
 use std::env;
 use structopt::StructOpt;
 
-use crate::github::{GitHubResponseError, GitHubResponse};
+use crate::github::{GitHubResponse, GitHubResponseError};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Bus Factor")]
@@ -47,7 +47,10 @@ async fn main() -> Result<()> {
 
 	if request_response.status() != 200 {
 		let error_response: GitHubResponseError = request_response.json().await?;
-		panic!("Failed to fetch repository data | {}", error_response.errors[0].message);
+		panic!(
+			"Failed to fetch repository data | {}",
+			error_response.errors[0].message
+		);
 	}
 
 	let response: GitHubResponse = request_response.json().await?;
