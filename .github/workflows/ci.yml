@@ -2,7 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 env:
@@ -61,7 +62,7 @@ jobs:
           args: -- -D warnings
 
   build:
-    runs-on: ${{ matrix.toolchain }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -86,7 +87,7 @@ jobs:
   
   test:
     name: Test
-    runs-on: ${{ matrix.toolchain }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
