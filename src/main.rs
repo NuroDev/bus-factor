@@ -1,9 +1,12 @@
+mod github;
+
 use anyhow::Result;
 use dotenv::dotenv;
 use reqwest::Client;
-use serde::Deserialize;
 use std::env;
 use structopt::StructOpt;
+
+use crate::github::{GitHubResponseError, GitHubResponse};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Bus Factor")]
@@ -15,23 +18,6 @@ struct Options {
 	/// Name of the programming language
 	#[structopt(short, long)]
 	language: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct Owner {
-	login: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct Repo {
-	name: String,
-	owner: Owner,
-	stargazers_count: u32,
-}
-
-#[derive(Deserialize, Debug)]
-struct GitHubResponse {
-	items: Vec<Repo>,
 }
 
 #[tokio::main]
@@ -52,14 +38,19 @@ async fn main() -> Result<()> {
 	let personal_access_token_var = env::var("GITHUB_ACCESS_TOKEN")?;
 	let personal_access_token = format!("token {}", &personal_access_token_var);
 
-	let response: GitHubResponse = Client::new()
+	let request_response = Client::new()
 		.get(&request_url)
 		.header("User-Agent", "Reqwest/bus-factor")
 		.header("authorization", &personal_access_token)
 		.send()
-		.await?
-		.json()
 		.await?;
+
+	if request_response.status() != 200 {
+		let error_response: GitHubResponseError = request_response.json().await?;
+		panic!("Failed to fetch repository data | {}", error_response.errors[0].message);
+	}
+
+	let response: GitHubResponse = request_response.json().await?;
 
 	println!("┌───────────────────────────────┬───────────────────────────┬────────────┐");
 	println!(
