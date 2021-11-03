@@ -92,5 +92,9 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Environment variables
+.env
+.env.local
+
 # End of https://www.toptal.com/developers/gitignore/api/rust,macos,windows,visualstudiocode
 
