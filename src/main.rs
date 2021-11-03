@@ -1,5 +1,7 @@
 use anyhow::Result;
 use dotenv::dotenv;
+use reqwest::Client;
+use serde::Deserialize;
 use std::env;
 use structopt::StructOpt;
 
@@ -15,26 +17,48 @@ struct Options {
 	language: String,
 }
 
+#[derive(Deserialize, Debug)]
+struct Owner {
+	login: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct Repo {
+	name: String,
+	owner: Owner,
+	stargazers_count: u32,
+}
+
+#[derive(Deserialize, Debug)]
+struct GitHubResponse {
+	items: Vec<Repo>,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
 	dotenv().ok();
-	let personal_access_token = env::var("GITHUB_ACCESS_TOKEN")?;
 
 	let opt = Options::from_args();
 
 	let language_filter = format!("language:{}", opt.language);
 
-	let octocrab = octocrab::OctocrabBuilder::new()
-		.personal_token(personal_access_token)
-		.build()?;
+	let request_url = format!(
+		"https://api.github.com/search/repositories?q={}&per_page={}&sort=stars",
+		language_filter, opt.count
+	);
 
-	let search_result = octocrab
-		.search()
-		.repositories(&language_filter)
-		.sort("stars")
-		.order("desc")
-		.per_page(opt.count)
+	// Auth via PAT requires a prefix for its header value.
+	// See: https://docs.github.com/en/rest/overview/other-authentication-methods#via-oauth-and-personal-access-tokens
+	let personal_access_token_var = env::var("GITHUB_ACCESS_TOKEN")?;
+	let personal_access_token = format!("token {}", &personal_access_token_var);
+
+	let response: GitHubResponse = Client::new()
+		.get(&request_url)
+		.header("User-Agent", "Reqwest/bus-factor")
+		.header("authorization", &personal_access_token)
 		.send()
+		.await?
+		.json()
 		.await?;
 
 	println!("┌───────────────────────────────┬───────────────────────────┬────────────┐");
@@ -44,10 +68,10 @@ async fn main() -> Result<()> {
 	);
 	println!("├───────────────────────────────┼───────────────────────────┼────────────┤");
 
-	search_result.items.iter().for_each(|repo| {
+	response.items.iter().for_each(|repo| {
 		println!(
 			"│{0: <30} │ {1: <25} │ {2: <10} │",
-			repo.name, repo.owner.login, 0
+			repo.name, repo.owner.login, repo.stargazers_count
 		);
 	});
 
