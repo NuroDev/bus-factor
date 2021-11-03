@@ -1,7 +1,7 @@
 use anyhow::Result;
 use dotenv::dotenv;
-use structopt::StructOpt;
 use std::env;
+use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Bus Factor")]
