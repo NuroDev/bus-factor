@@ -1,5 +1,7 @@
 use anyhow::Result;
+use dotenv::dotenv;
 use structopt::StructOpt;
+use std::env;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Bus Factor")]
@@ -15,11 +17,18 @@ struct Options {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+	dotenv().ok();
+	let personal_access_token = env::var("GITHUB_ACCESS_TOKEN")?;
+
 	let opt = Options::from_args();
 
 	let language_filter = format!("language:{}", opt.language);
 
-	let search_result = octocrab::instance()
+	let octocrab = octocrab::OctocrabBuilder::new()
+		.personal_token(personal_access_token)
+		.build()?;
+
+	let search_result = octocrab
 		.search()
 		.repositories(&language_filter)
 		.sort("stars")
