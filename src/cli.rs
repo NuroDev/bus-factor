@@ -3,7 +3,7 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Bus Factor")]
 pub struct Options {
-	/// Max number of projects to fetch
+	/// Number of projects to search for
 	#[structopt(short, long)]
 	pub count: Option<usize>,
 
