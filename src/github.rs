@@ -30,15 +30,3 @@ pub struct Contributor {
 pub struct GitHubResponse<T> {
 	pub items: Vec<T>,
 }
-
-#[derive(Deserialize, Debug)]
-pub struct Bus {
-	/// Total number of contributions the user has commited to the project
-	pub contributions: usize,
-	/// Name of the repository
-	pub name: String,
-	/// Number of stars the repository has
-	pub stars: usize,
-	/// The GitHub user / org who owns the repository
-	pub user: String,
-}

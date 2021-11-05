@@ -5,12 +5,25 @@ use anyhow::Result;
 use cli::Options;
 use dotenv::dotenv;
 use futures::future::join_all;
-use github::{Bus, Contributor, GitHubResponse, Repo};
+use github::{Contributor, GitHubResponse, Repo};
 use reqwest::{
 	Client,
 	header::{HeaderMap, HeaderValue},
 };
+use serde::Deserialize;
 use std::{env, ops::Index};
+
+#[derive(Deserialize, Debug)]
+pub struct Bus {
+	/// Total number of contributions the user has commited to the project
+	pub contributions: usize,
+	/// Name of the repository
+	pub name: String,
+	/// Number of stars the repository has
+	pub stars: usize,
+	/// The GitHub user / org who owns the repository
+	pub user: String,
+}
 
 /// Search for the most popular projects on GitHub by stars using a provided
 /// search filter
