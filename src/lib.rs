@@ -10,18 +10,7 @@ use reqwest::{
 	header::{HeaderMap, HeaderValue},
 	Client,
 };
-use serde::Deserialize;
 use std::{env, ops::Index};
-
-#[derive(Deserialize, Debug)]
-pub struct Bus {
-	/// Name of the repository
-	pub name: String,
-	/// Number of stars the repository has
-	pub stars: usize,
-	/// Top contributor to the repository
-	pub top_contributor: Contributor,
-}
 
 /// Search for the most popular projects on GitHub by stars using a provided
 /// search filter
@@ -73,7 +62,7 @@ async fn handle_contributor_response(client: &Client, repo: &Repo) -> Result<Vec
 
 /// Search for repositories from a provided language & count & return as a
 /// collection of `Bus` objects
-pub async fn get_buses(options: &Options) -> Result<Vec<Bus>> {
+pub async fn get_buses(options: &Options) -> Result<Vec<(String, usize, Contributor)>> {
 	dotenv().ok();
 
 	// Auth via PAT requires a prefix for its header value.
@@ -124,11 +113,11 @@ pub async fn get_buses(options: &Options) -> Result<Vec<Bus>> {
 
 			let top_contributor = repo_contributors.first().unwrap_or(&default_contributor);
 
-			Some(Bus {
-				name: repo.name.clone(),
-				stars: repo.stargazers_count,
-				top_contributor: top_contributor.clone(),
-			})
+			Some((
+				repo.name.clone(),
+				repo.stargazers_count,
+				top_contributor.clone(),
+			))
 		})
 		.collect();
 

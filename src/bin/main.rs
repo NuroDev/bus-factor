@@ -18,10 +18,10 @@ async fn main() -> Result<()> {
 	);
 	println!("├───────────────────────────────┼───────────────────────────┼─────────────────┼─────────────────┤");
 
-	buses.iter().for_each(|bus| {
+	buses.iter().for_each(|(name, stars, top_contributor)| {
 		println!(
 			"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
-			bus.name, bus.top_contributor.login, bus.top_contributor.contributions, bus.stars,
+			name, top_contributor.login, top_contributor.contributions, stars,
 		);
 	});
 
