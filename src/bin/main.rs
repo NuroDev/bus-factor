@@ -23,7 +23,10 @@ async fn main() -> Result<()> {
 		.for_each(|(name, top_contributor, percentage, stars)| {
 			println!(
 				"│ {0: <30} │ {1: <25} │ {2: <16} │ {3: <15} │",
-				name, top_contributor.login, format!("{}%", percentage), stars,
+				name,
+				top_contributor.login,
+				format!("{}%", percentage),
+				stars,
 			);
 		});
 
