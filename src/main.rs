@@ -2,7 +2,10 @@ mod github;
 
 use anyhow::Result;
 use dotenv::dotenv;
-use reqwest::Client;
+use reqwest::{
+	Client,
+	header::{HeaderMap, HeaderValue}
+};
 use std::env;
 use structopt::StructOpt;
 
@@ -38,22 +41,24 @@ async fn main() -> Result<()> {
 	let personal_access_token_var = env::var("GITHUB_ACCESS_TOKEN")?;
 	let personal_access_token = format!("token {}", &personal_access_token_var);
 
-	let request_response = Client::new()
+	let authorization_header_key = HeaderValue::from_str(&personal_access_token)?;
+
+	let mut headers = HeaderMap::new();
+	headers.insert("authorization", authorization_header_key);
+
+	let client = Client::builder().user_agent("Reqwest/bus-factor").default_headers(headers).build()?;
+
+	let repo_response = client
 		.get(&request_url)
-		.header("User-Agent", "Reqwest/bus-factor")
-		.header("authorization", &personal_access_token)
 		.send()
 		.await?;
 
-	if request_response.status() != 200 {
-		let error_response: GitHubResponseError = request_response.json().await?;
-		panic!(
-			"Failed to fetch repository data | {}",
-			error_response.errors[0].message
-		);
+	let status = repo_response.status();
+	if status != 200 {
+		panic!("[{}] Failed to fetch repository data | {}", status, repo_response.text().await?);
 	}
 
-	let response: GitHubResponse<Repo> = request_response.json().await?;
+	let repos: GitHubResponse<Repo> = repo_response.json().await?;
 
 	println!("┌───────────────────────────────┬───────────────────────────┬────────────┐");
 	println!(
@@ -62,7 +67,7 @@ async fn main() -> Result<()> {
 	);
 	println!("├───────────────────────────────┼───────────────────────────┼────────────┤");
 
-	response.items.iter().for_each(|repo| {
+	repos.items.iter().for_each(|repo| {
 		println!(
 			"│{0: <30} │ {1: <25} │ {2: <10} │",
 			repo.name, repo.owner.login, repo.stargazers_count

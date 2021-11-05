@@ -9,7 +9,7 @@ pub struct Owner {
 pub struct Repo {
 	pub name: String,
 	pub owner: Owner,
-	pub stargazers_count: u32,
+	pub stargazers_count: usize,
 }
 
 #[derive(Deserialize, Debug)]
@@ -20,9 +20,4 @@ pub struct GitHubResponse <T> {
 #[derive(Deserialize, Debug)]
 pub struct GitHubError {
 	pub message: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct GitHubResponseError {
-	pub errors: Vec<GitHubError>,
 }
