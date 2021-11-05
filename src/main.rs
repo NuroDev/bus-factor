@@ -2,9 +2,10 @@ mod github;
 
 use anyhow::Result;
 use dotenv::dotenv;
-use github::{GitHubResponse, Repo};
+use futures::future::join_all;
+use github::{Contributor, GitHubResponse, Repo};
 use reqwest::{Client, header::{HeaderMap, HeaderValue}};
-use std::env;
+use std::{env, ops::Index};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -46,6 +47,21 @@ async fn search_top_repos (client: &Client, filter: String, count: Option<usize>
 	Ok(repos.items)
 }
 
+/// Fetch all contributors for a provided GitHub repository
+async fn handle_contributor_response (client: &Client, repo: &Repo) -> Result<Vec<Contributor>> {
+	let response = client.get(&repo.contributors_url).send().await?;
+
+	let status = response.status();
+	if status != 200 {
+		let response_text = response.text().await?;
+		panic!("[{}] Failed to unwrap contributor response | {}", status, response_text);
+	}
+
+	let contributors: Vec<Contributor> = response.json().await?;
+
+	Ok(contributors)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
 	dotenv().ok();
@@ -56,8 +72,7 @@ async fn main() -> Result<()> {
 
 	// Auth via PAT requires a prefix for its header value.
 	// Docs: https://docs.github.com/en/rest/overview/other-authentication-methods#via-oauth-and-personal-access-tokens
-	let personal_access_token_var = env::var("GITHUB_ACCESS_TOKEN")?;
-	let personal_access_token = format!("token {}", &personal_access_token_var);
+	let personal_access_token = format!("token {}", env::var("GITHUB_ACCESS_TOKEN")?);
 
 	let authorization_header_key = HeaderValue::from_str(&personal_access_token)?;
 	let mut headers = HeaderMap::new();
@@ -69,21 +84,29 @@ async fn main() -> Result<()> {
 
 	let repos = search_top_repos(&client, language_filter, opt.count).await?;
 
-	println!("┌───────────────────────────────┬───────────────────────────┬────────────┐");
-	println!(
-		"│{0: <30} │ {1: <25} │ {2: <10} │",
-		"Project", "User", "Percentage"
-	);
-	println!("├───────────────────────────────┼───────────────────────────┼────────────┤");
+	let contributors_results = join_all(repos.iter().map(|repo| handle_contributor_response(&client, repo))).await;
+	let contributors = contributors_results.into_iter().map(|c| c.expect("Failed to unwrap contributor")).collect::<Vec<Vec<Contributor>>>();
 
-	repos.iter().for_each(|repo| {
+	println!("┌───────────────────────────────┬───────────────────────────┬─────────────────┬─────────────────┐");
+	println!(
+		"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
+		"Project", "Top Contributor", "Percentage", "Stars"
+	);
+	println!("├───────────────────────────────┼───────────────────────────┼─────────────────┼─────────────────┤");
+
+	repos.iter().enumerate().for_each(|(i, repo),| {
+		let top_contributor = match contributors.index(i).first() {
+			Some(val) => val,
+			None => panic!(""),
+		};
+		
 		println!(
-			"│{0: <30} │ {1: <25} │ {2: <10} │",
-			repo.name, repo.owner.login, repo.stargazers_count
+			"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
+			repo.name, top_contributor.login, top_contributor.contributions, repo.stargazers_count,
 		);
 	});
 
-	println!("└───────────────────────────────┴───────────────────────────┴────────────┘");
+	println!("└───────────────────────────────┴───────────────────────────┴─────────────────┴─────────────────┘");
 
 	Ok(())
 }

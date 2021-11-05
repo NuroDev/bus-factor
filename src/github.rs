@@ -8,6 +8,8 @@ pub struct Owner {
 
 #[derive(Deserialize, Debug)]
 pub struct Repo {
+	/// API URL to fetch all contributors to the project
+	pub contributors_url: String,
 	/// Name of the repository
 	pub name: String,
 	/// Repository owner metadat
