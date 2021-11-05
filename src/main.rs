@@ -6,7 +6,7 @@ use reqwest::Client;
 use std::env;
 use structopt::StructOpt;
 
-use crate::github::{GitHubResponse, GitHubResponseError};
+use crate::github::{GitHubResponse, GitHubResponseError, Repo};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Bus Factor")]
@@ -53,7 +53,7 @@ async fn main() -> Result<()> {
 		);
 	}
 
-	let response: GitHubResponse = request_response.json().await?;
+	let response: GitHubResponse<Repo> = request_response.json().await?;
 
 	println!("┌───────────────────────────────┬───────────────────────────┬────────────┐");
 	println!(

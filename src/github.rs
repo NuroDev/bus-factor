@@ -13,8 +13,8 @@ pub struct Repo {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct GitHubResponse {
-	pub items: Vec<Repo>,
+pub struct GitHubResponse <T> {
+	pub items: Vec<T>,
 }
 
 #[derive(Deserialize, Debug)]
