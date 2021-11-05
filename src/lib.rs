@@ -1,27 +1,15 @@
+pub mod cli;
 mod github;
 
 use anyhow::Result;
-use dotenv::dotenv;
+use cli::Options;
 use futures::future::join_all;
 use github::{Bus, Contributor, GitHubResponse, Repo};
 use reqwest::{
-	header::{HeaderMap, HeaderValue},
 	Client,
+	header::{HeaderMap, HeaderValue},
 };
 use std::{env, ops::Index};
-use structopt::StructOpt;
-
-#[derive(StructOpt, Debug)]
-#[structopt(name = "Bus Factor")]
-struct Options {
-	/// Max number of projects to fetch
-	#[structopt(short, long)]
-	count: Option<usize>,
-
-	/// Name of the programming language
-	#[structopt(short, long)]
-	language: String,
-}
 
 /// Search for the most popular projects on GitHub by stars using a provided
 /// search filter
@@ -73,7 +61,7 @@ async fn handle_contributor_response(client: &Client, repo: &Repo) -> Result<Vec
 
 /// Search for repositories from a provided language & count & return as a
 /// collection of `Bus` objects
-async fn get_buses(options: &Options) -> Result<Vec<Bus>> {
+pub async fn get_buses(options: &Options) -> Result<Vec<Bus>> {
 	// Auth via PAT requires a prefix for its header value.
 	// Docs: https://docs.github.com/en/rest/overview/other-authentication-methods#via-oauth-and-personal-access-tokens
 	let personal_access_token = format!("token {}", env::var("GITHUB_ACCESS_TOKEN")?);
@@ -127,31 +115,4 @@ async fn get_buses(options: &Options) -> Result<Vec<Bus>> {
 		.collect();
 
 	Ok(buses)
-}
-
-#[tokio::main]
-async fn main() -> Result<()> {
-	dotenv().ok();
-
-	let opt = Options::from_args();
-
-	let buses = get_buses(&opt).await?;
-
-	println!("┌───────────────────────────────┬───────────────────────────┬─────────────────┬─────────────────┐");
-	println!(
-		"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
-		"Project", "Top Contributor", "Percentage", "Stars"
-	);
-	println!("├───────────────────────────────┼───────────────────────────┼─────────────────┼─────────────────┤");
-
-	buses.iter().for_each(|bus| {
-		println!(
-			"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
-			bus.name, bus.user, bus.contributions, bus.stars,
-		);
-	});
-
-	println!("└───────────────────────────────┴───────────────────────────┴─────────────────┴─────────────────┘");
-
-	Ok(())
 }
