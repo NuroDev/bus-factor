@@ -30,10 +30,7 @@ async fn search_top_repos(
 	filter: String,
 	count: Option<usize>,
 ) -> Result<Vec<Repo>> {
-	let per_page = match count {
-		Some(c) => c,
-		None => 10,
-	};
+	let per_page = count.unwrap_or(10);
 
 	let request_url = format!(
 		"https://api.github.com/search/repositories?q={}&per_page={}&sort=stars",
