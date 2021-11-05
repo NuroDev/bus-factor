@@ -1,6 +1,6 @@
 use anyhow::Result;
 use bus_factor::{cli::Options, get_buses};
-use stopwatch::{Stopwatch};
+use stopwatch::Stopwatch;
 use structopt::StructOpt;
 
 #[tokio::main]

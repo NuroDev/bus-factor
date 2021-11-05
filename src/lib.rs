@@ -7,8 +7,8 @@ use dotenv::dotenv;
 use futures::future::join_all;
 use github::{Contributor, GitHubResponse, Repo};
 use reqwest::{
-	Client,
 	header::{HeaderMap, HeaderValue},
+	Client,
 };
 use serde::Deserialize;
 use std::{env, ops::Index};
