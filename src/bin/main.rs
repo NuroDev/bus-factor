@@ -1,12 +1,15 @@
 use anyhow::Result;
 use bus_factor::{cli::Options, get_buses};
+use stopwatch::{Stopwatch};
 use structopt::StructOpt;
 
 #[tokio::main]
 async fn main() -> Result<()> {
 	let opt = Options::from_args();
 
+	let mut sw = Stopwatch::start_new();
 	let buses = get_buses(&opt).await?;
+	sw.stop();
 
 	println!("┌───────────────────────────────┬───────────────────────────┬─────────────────┬─────────────────┐");
 	println!(
@@ -22,7 +25,11 @@ async fn main() -> Result<()> {
 		);
 	});
 
-	println!("└───────────────────────────────┴───────────────────────────┴─────────────────┴─────────────────┘");
+	let elapsed_ms = format!("{}ms", sw.elapsed_ms());
+
+	println!("├───────────────────────────────┴───────────────────────────┴─────────────────┴─────────────────┤");
+	println!("│ Completed in: {0: <80}│", elapsed_ms);
+	println!("└───────────────────────────────────────────────────────────────────────────────────────────────┘");
 
 	Ok(())
 }
