@@ -112,11 +112,16 @@ async fn main() -> Result<()> {
 	);
 	println!("├───────────────────────────────┼───────────────────────────┼─────────────────┼─────────────────┤");
 
+	let default_contributor = Contributor {
+		contributions: 0,
+		login: String::from("Unknown User"),
+	};
+
 	repos.iter().enumerate().for_each(|(i, repo)| {
-		let top_contributor = match contributors.index(i).first() {
-			Some(val) => val,
-			None => panic!(""),
-		};
+		let top_contributor = contributors
+			.index(i)
+			.first()
+			.unwrap_or(&default_contributor);
 
 		println!(
 			"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
