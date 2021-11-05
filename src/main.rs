@@ -9,7 +9,7 @@ use reqwest::{
 use std::env;
 use structopt::StructOpt;
 
-use crate::github::{GitHubResponse, GitHubResponseError, Repo};
+use crate::github::{GitHubResponse, Repo};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Bus Factor")]
