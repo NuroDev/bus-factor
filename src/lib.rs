@@ -62,7 +62,7 @@ async fn handle_contributor_response(client: &Client, repo: &Repo) -> Result<Vec
 
 /// Search for repositories from a provided language & count & return as a
 /// collection of `Bus` objects
-pub async fn get_buses(options: &Options) -> Result<Vec<(String, usize, Contributor)>> {
+pub async fn get_buses(options: &Options) -> Result<Vec<(String, Contributor, usize, usize)>> {
 	dotenv().ok();
 
 	// Auth via PAT requires a prefix for its header value.
@@ -92,31 +92,56 @@ pub async fn get_buses(options: &Options) -> Result<Vec<(String, usize, Contribu
 		.map(|c| c.expect("Failed to unwrap contributor"))
 		.collect::<Vec<Vec<Contributor>>>();
 
-	let default_contributor = Contributor {
-		contributions: 0,
-		login: String::from("Unknown User"),
-	};
+	let contributors_total_commits = contributors
+		.iter()
+		.map(|repo| {
+			let mut total_commits = 0;
+			repo.iter()
+				.for_each(|contributor| total_commits += contributor.contributions);
 
-	let percentage = 0.5;
+			total_commits
+		})
+		.collect::<Vec<usize>>();
 
 	let buses = repos
 		.iter()
 		.enumerate()
 		.filter_map(|(i, repo)| {
+			// Filters out any contributors that are not valid / viable &
+			// returns the top contributor to the project & their contribution
+			// percentage.
 			// Assumes the first item in the collection is the top contributor
-			// Docs: https://docs.github.com/en/rest/reference/repos#list-repository-contributors
-			let repo_contributors = contributors.index(i);
+			// (https://docs.github.com/en/rest/reference/repos#list-repository-contributors)
+			let (top_contributor, percentage) = contributors
+				.index(i)
+				.into_iter()
+				.filter_map(|contributor| {
+					let percentage =
+						(100 * contributor.contributions) / contributors_total_commits.index(i);
 
-			if percentage >= 1.0 {
-				return None;
-			}
+					// Ignore any active developers who's contributions are over 75%
+					if percentage >= 75 {
+						return None;
+					}
 
-			let top_contributor = repo_contributors.first().unwrap_or(&default_contributor);
+					Some((contributor.clone(), percentage))
+				})
+				.collect::<Vec<(Contributor, usize)>>()
+				.first()
+				.unwrap_or(&(
+					Contributor {
+						contributions: 0,
+						login: String::from("Unknown User"),
+					},
+					0,
+				))
+				.clone();
 
 			Some((
-				repo.name.clone(),
+				format!("{}/{}", repo.owner.login, repo.name),
+				top_contributor,
+				percentage,
 				repo.stargazers_count,
-				top_contributor.clone(),
 			))
 		})
 		.collect();
