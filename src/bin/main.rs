@@ -18,12 +18,14 @@ async fn main() -> Result<()> {
 	);
 	println!("├───────────────────────────────┼───────────────────────────┼─────────────────┼─────────────────┤");
 
-	buses.iter().for_each(|(name, stars, top_contributor)| {
-		println!(
-			"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
-			name, top_contributor.login, top_contributor.contributions, stars,
-		);
-	});
+	buses
+		.iter()
+		.for_each(|(name, top_contributor, percentage, stars)| {
+			println!(
+				"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
+				name, top_contributor.login, format!("{}%", percentage), stars,
+			);
+		});
 
 	let elapsed_ms = format!("{}ms", sw.elapsed_ms());
 
