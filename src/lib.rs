@@ -3,6 +3,7 @@ mod github;
 
 use anyhow::Result;
 use cli::Options;
+use dotenv::dotenv;
 use futures::future::join_all;
 use github::{Bus, Contributor, GitHubResponse, Repo};
 use reqwest::{
@@ -62,6 +63,8 @@ async fn handle_contributor_response(client: &Client, repo: &Repo) -> Result<Vec
 /// Search for repositories from a provided language & count & return as a
 /// collection of `Bus` objects
 pub async fn get_buses(options: &Options) -> Result<Vec<Bus>> {
+	dotenv().ok();
+
 	// Auth via PAT requires a prefix for its header value.
 	// Docs: https://docs.github.com/en/rest/overview/other-authentication-methods#via-oauth-and-personal-access-tokens
 	let personal_access_token = format!("token {}", env::var("GITHUB_ACCESS_TOKEN")?);

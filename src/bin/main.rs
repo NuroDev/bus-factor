@@ -1,12 +1,9 @@
 use anyhow::Result;
 use bus_factor::{cli::Options, get_buses};
-use dotenv::dotenv;
 use structopt::StructOpt;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-	dotenv().ok();
-
 	let opt = Options::from_args();
 
 	let buses = get_buses(&opt).await?;
