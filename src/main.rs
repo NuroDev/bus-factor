@@ -3,7 +3,7 @@ mod github;
 use anyhow::Result;
 use dotenv::dotenv;
 use futures::future::join_all;
-use github::{Contributor, GitHubResponse, Repo};
+use github::{Bus, Contributor, GitHubResponse, Repo};
 use reqwest::{
 	header::{HeaderMap, HeaderValue},
 	Client,
@@ -71,14 +71,9 @@ async fn handle_contributor_response(client: &Client, repo: &Repo) -> Result<Vec
 	Ok(contributors)
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
-	dotenv().ok();
-
-	let opt = Options::from_args();
-
-	let language_filter = format!("language:{}", opt.language);
-
+/// Search for repositories from a provided language & count & return as a
+/// collection of `Bus` objects
+async fn get_buses(options: &Options) -> Result<Vec<Bus>> {
 	// Auth via PAT requires a prefix for its header value.
 	// Docs: https://docs.github.com/en/rest/overview/other-authentication-methods#via-oauth-and-personal-access-tokens
 	let personal_access_token = format!("token {}", env::var("GITHUB_ACCESS_TOKEN")?);
@@ -92,7 +87,8 @@ async fn main() -> Result<()> {
 		.default_headers(headers)
 		.build()?;
 
-	let repos = search_top_repos(&client, language_filter, opt.count).await?;
+	let language_filter = format!("language:{}", options.language);
+	let repos = search_top_repos(&client, language_filter, options.count).await?;
 
 	let contributors_results = join_all(
 		repos
@@ -105,6 +101,42 @@ async fn main() -> Result<()> {
 		.map(|c| c.expect("Failed to unwrap contributor"))
 		.collect::<Vec<Vec<Contributor>>>();
 
+	let default_contributor = Contributor {
+		contributions: 0,
+		login: String::from("Unknown User"),
+	};
+
+	let buses = repos
+		.iter()
+		.enumerate()
+		.map(|(i, repo)| {
+			// TODO: Check that the first item is the top contributor
+			// Assumes the first item in the collection is the top contributor
+			let top_contributor = contributors
+				.index(i)
+				.first()
+				.unwrap_or(&default_contributor);
+
+			Bus {
+				contributions: top_contributor.contributions,
+				name: repo.name.clone(),
+				stars: repo.stargazers_count,
+				user: repo.owner.login.clone(),
+			}
+		})
+		.collect();
+
+	Ok(buses)
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+	dotenv().ok();
+
+	let opt = Options::from_args();
+
+	let buses = get_buses(&opt).await?;
+
 	println!("┌───────────────────────────────┬───────────────────────────┬─────────────────┬─────────────────┐");
 	println!(
 		"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
@@ -112,20 +144,10 @@ async fn main() -> Result<()> {
 	);
 	println!("├───────────────────────────────┼───────────────────────────┼─────────────────┼─────────────────┤");
 
-	let default_contributor = Contributor {
-		contributions: 0,
-		login: String::from("Unknown User"),
-	};
-
-	repos.iter().enumerate().for_each(|(i, repo)| {
-		let top_contributor = contributors
-			.index(i)
-			.first()
-			.unwrap_or(&default_contributor);
-
+	buses.iter().for_each(|bus| {
 		println!(
 			"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
-			repo.name, top_contributor.login, top_contributor.contributions, repo.stargazers_count,
+			bus.name, bus.user, bus.contributions, bus.stars,
 		);
 	});
 

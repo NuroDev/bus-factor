@@ -12,7 +12,7 @@ pub struct Repo {
 	pub contributors_url: String,
 	/// Name of the repository
 	pub name: String,
-	/// Repository owner metadat
+	/// Repository owner metadata
 	pub owner: Owner,
 	/// Number of stars the repository has
 	pub stargazers_count: usize,
@@ -32,6 +32,13 @@ pub struct GitHubResponse<T> {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct GitHubError {
-	pub message: String,
+pub struct Bus {
+	/// Total number of contributions the user has commited to the project
+	pub contributions: usize,
+	/// Name of the repository
+	pub name: String,
+	/// Number of stars the repository has
+	pub stars: usize,
+	/// The GitHub user / org who owns the repository
+	pub user: String,
 }
