@@ -19,6 +19,7 @@ struct Options {
 	language: String,
 }
 
+/// Search for the most popular projects on GitHub by stars using a provided search filter
 async fn search_top_repos (client: &Client, filter: String, count: Option<usize>) -> Result<Vec<Repo>> {
 	let per_page = match count {
 		Some(c) => c,
