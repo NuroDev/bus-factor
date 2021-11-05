@@ -27,7 +27,7 @@ pub struct Contributor {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct GitHubResponse <T> {
+pub struct GitHubResponse<T> {
 	pub items: Vec<T>,
 }
 

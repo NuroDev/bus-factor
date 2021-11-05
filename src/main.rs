@@ -4,7 +4,10 @@ use anyhow::Result;
 use dotenv::dotenv;
 use futures::future::join_all;
 use github::{Contributor, GitHubResponse, Repo};
-use reqwest::{Client, header::{HeaderMap, HeaderValue}};
+use reqwest::{
+	header::{HeaderMap, HeaderValue},
+	Client,
+};
 use std::{env, ops::Index};
 use structopt::StructOpt;
 
@@ -20,8 +23,13 @@ struct Options {
 	language: String,
 }
 
-/// Search for the most popular projects on GitHub by stars using a provided search filter
-async fn search_top_repos (client: &Client, filter: String, count: Option<usize>) -> Result<Vec<Repo>> {
+/// Search for the most popular projects on GitHub by stars using a provided
+/// search filter
+async fn search_top_repos(
+	client: &Client,
+	filter: String,
+	count: Option<usize>,
+) -> Result<Vec<Repo>> {
 	let per_page = match count {
 		Some(c) => c,
 		None => 10,
@@ -32,14 +40,15 @@ async fn search_top_repos (client: &Client, filter: String, count: Option<usize>
 		filter, per_page
 	);
 
-	let repo_response = client
-		.get(&request_url)
-		.send()
-		.await?;
+	let repo_response = client.get(&request_url).send().await?;
 
 	let status = repo_response.status();
 	if status != 200 {
-		panic!("[{}] Failed to fetch repository data | {}", status, repo_response.text().await?);
+		panic!(
+			"[{}] Failed to fetch repository data | {}",
+			status,
+			repo_response.text().await?
+		);
 	}
 
 	let repos: GitHubResponse<Repo> = repo_response.json().await?;
@@ -48,13 +57,16 @@ async fn search_top_repos (client: &Client, filter: String, count: Option<usize>
 }
 
 /// Fetch all contributors for a provided GitHub repository
-async fn handle_contributor_response (client: &Client, repo: &Repo) -> Result<Vec<Contributor>> {
+async fn handle_contributor_response(client: &Client, repo: &Repo) -> Result<Vec<Contributor>> {
 	let response = client.get(&repo.contributors_url).send().await?;
 
 	let status = response.status();
 	if status != 200 {
 		let response_text = response.text().await?;
-		panic!("[{}] Failed to unwrap contributor response | {}", status, response_text);
+		panic!(
+			"[{}] Failed to unwrap contributor response | {}",
+			status, response_text
+		);
 	}
 
 	let contributors: Vec<Contributor> = response.json().await?;
@@ -78,14 +90,23 @@ async fn main() -> Result<()> {
 	let mut headers = HeaderMap::new();
 	headers.insert("authorization", authorization_header_key);
 
-	let client = Client::builder().user_agent("Reqwest/bus-factor")
-						.default_headers(headers)
-						.build()?;
+	let client = Client::builder()
+		.user_agent("Reqwest/bus-factor")
+		.default_headers(headers)
+		.build()?;
 
 	let repos = search_top_repos(&client, language_filter, opt.count).await?;
 
-	let contributors_results = join_all(repos.iter().map(|repo| handle_contributor_response(&client, repo))).await;
-	let contributors = contributors_results.into_iter().map(|c| c.expect("Failed to unwrap contributor")).collect::<Vec<Vec<Contributor>>>();
+	let contributors_results = join_all(
+		repos
+			.iter()
+			.map(|repo| handle_contributor_response(&client, repo)),
+	)
+	.await;
+	let contributors = contributors_results
+		.into_iter()
+		.map(|c| c.expect("Failed to unwrap contributor"))
+		.collect::<Vec<Vec<Contributor>>>();
 
 	println!("┌───────────────────────────────┬───────────────────────────┬─────────────────┬─────────────────┐");
 	println!(
@@ -94,12 +115,12 @@ async fn main() -> Result<()> {
 	);
 	println!("├───────────────────────────────┼───────────────────────────┼─────────────────┼─────────────────┤");
 
-	repos.iter().enumerate().for_each(|(i, repo),| {
+	repos.iter().enumerate().for_each(|(i, repo)| {
 		let top_contributor = match contributors.index(i).first() {
 			Some(val) => val,
 			None => panic!(""),
 		};
-		
+
 		println!(
 			"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
 			repo.name, top_contributor.login, top_contributor.contributions, repo.stargazers_count,
