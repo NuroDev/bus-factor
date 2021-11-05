@@ -108,22 +108,27 @@ pub async fn get_buses(options: &Options) -> Result<Vec<Bus>> {
 		login: String::from("Unknown User"),
 	};
 
+	let percentage = 0.5;
+
 	let buses = repos
 		.iter()
 		.enumerate()
-		.map(|(i, repo)| {
+		.filter_map(|(i, repo)| {
 			// Assumes the first item in the collection is the top contributor
 			// Docs: https://docs.github.com/en/rest/reference/repos#list-repository-contributors
-			let top_contributor = contributors
-				.index(i)
-				.first()
-				.unwrap_or(&default_contributor);
+			let repo_contributors = contributors.index(i);
 
-			Bus {
+			if percentage >= 1.0 {
+				return None;
+			}
+
+			let top_contributor = repo_contributors.first().unwrap_or(&default_contributor);
+
+			Some(Bus {
 				name: repo.name.clone(),
 				stars: repo.stargazers_count,
 				top_contributor: top_contributor.clone(),
-			}
+			})
 		})
 		.collect();
 
