@@ -114,8 +114,8 @@ pub async fn get_buses(options: &Options) -> Result<Vec<Bus>> {
 		.iter()
 		.enumerate()
 		.map(|(i, repo)| {
-			// TODO: Check that the first item is the top contributor
 			// Assumes the first item in the collection is the top contributor
+			// Docs: https://docs.github.com/en/rest/reference/repos#list-repository-contributors
 			let top_contributor = contributors
 				.index(i)
 				.first()
