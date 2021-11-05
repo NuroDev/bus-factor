@@ -18,7 +18,7 @@ pub struct Repo {
 	pub stargazers_count: usize,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug)]
 pub struct Contributor {
 	/// The number of contributions to the project
 	pub contributions: usize,

@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
 	buses.iter().for_each(|bus| {
 		println!(
 			"│{0: <30} │ {1: <25} │ {2: <15} │ {3: <15} │",
-			bus.name, bus.user, bus.contributions, bus.stars,
+			bus.name, bus.top_contributor.login, bus.top_contributor.contributions, bus.stars,
 		);
 	});
 

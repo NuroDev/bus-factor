@@ -15,14 +15,12 @@ use std::{env, ops::Index};
 
 #[derive(Deserialize, Debug)]
 pub struct Bus {
-	/// Total number of contributions the user has commited to the project
-	pub contributions: usize,
 	/// Name of the repository
 	pub name: String,
 	/// Number of stars the repository has
 	pub stars: usize,
-	/// The GitHub user / org who owns the repository
-	pub user: String,
+	/// Top contributor to the repository
+	pub top_contributor: Contributor,
 }
 
 /// Search for the most popular projects on GitHub by stars using a provided
@@ -122,10 +120,9 @@ pub async fn get_buses(options: &Options) -> Result<Vec<Bus>> {
 				.unwrap_or(&default_contributor);
 
 			Bus {
-				contributions: top_contributor.contributions,
 				name: repo.name.clone(),
 				stars: repo.stargazers_count,
-				user: repo.owner.login.clone(),
+				top_contributor: top_contributor.clone(),
 			}
 		})
 		.collect();
