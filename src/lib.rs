@@ -1,5 +1,7 @@
 pub mod cli;
 mod github;
+#[cfg(test)]
+mod tests;
 
 use anyhow::Result;
 use cli::Options;
