@@ -108,7 +108,7 @@ pub async fn get_buses(options: &Options) -> Result<Vec<(String, Contributor, us
 	let buses = repos
 		.iter()
 		.enumerate()
-		.filter_map(|(i, repo)| {
+		.map(|(i, repo)| {
 			// Filters out any contributors that are not valid / viable &
 			// returns the top contributor to the project & their contribution
 			// percentage.
@@ -116,7 +116,7 @@ pub async fn get_buses(options: &Options) -> Result<Vec<(String, Contributor, us
 			// (https://docs.github.com/en/rest/reference/repos#list-repository-contributors)
 			let (top_contributor, percentage) = contributors
 				.index(i)
-				.into_iter()
+				.iter()
 				.filter_map(|contributor| {
 					let percentage =
 						(100 * contributor.contributions) / contributors_total_commits.index(i);
@@ -139,12 +139,12 @@ pub async fn get_buses(options: &Options) -> Result<Vec<(String, Contributor, us
 				))
 				.clone();
 
-			Some((
+			(
 				format!("{}/{}", repo.owner.login, repo.name),
 				top_contributor,
 				percentage,
 				repo.stargazers_count,
-			))
+			)
 		})
 		.collect();
 
